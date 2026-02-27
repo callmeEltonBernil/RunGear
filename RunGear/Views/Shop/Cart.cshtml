@@ -1,0 +1,248 @@
+@* ============================================================
+   MODULE 6 - PREVIEW BASKET / SHOPPING CART
+   Controller : ShopController.cs  →  Action: Cart
+   Model      : CartViewModel
+   ============================================================ *@
+
+@model RunGear.Models.CartViewModel
+
+@{
+    ViewBag.Title      = "Shopping Cart";
+    ViewBag.ActivePage = "Cart";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+<style>
+    .cart-page { max-width: 1000px; margin: 0 auto; padding: 40px 24px; }
+    .page-title-big {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 32px; letter-spacing: 2px; margin-bottom: 28px;
+    }
+    .cart-layout { display: flex; gap: 24px; }
+    .cart-items   { flex: 1; display: flex; flex-direction: column; gap: 14px; }
+
+    /* ── Cart Item ── */
+    .cart-item {
+        border: 1px solid #e8e8e8; border-radius: 8px; padding: 16px;
+        display: flex; align-items: flex-start; gap: 14px;
+    }
+    .cart-item-img {
+        width: 90px; height: 90px; border-radius: 6px;
+        object-fit: cover; background: #f5f5f5; flex-shrink: 0;
+    }
+    .cart-item-details { flex: 1; }
+    .cart-item-name { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+    .cart-item-meta { font-size: 12px; color: #888; margin-bottom: 6px; }
+    .in-stock-badge {
+        display: inline-block; background: #dcfce7; color: #16a34a;
+        font-size: 10px; font-weight: 700; padding: 2px 7px;
+        border-radius: 3px; margin-bottom: 8px;
+    }
+    .out-stock-badge {
+        display: inline-block; background: #fee2e2; color: #dc2626;
+        font-size: 10px; font-weight: 700; padding: 2px 7px;
+        border-radius: 3px; margin-bottom: 8px;
+    }
+
+    /* ── Qty & Remove ── */
+    .cart-item-price-col {
+        display: flex; flex-direction: column;
+        align-items: flex-end; gap: 20px;
+    }
+    .cart-item-price { font-weight: 700; font-size: 15px; }
+    .qty-control {
+        display: flex; align-items: center;
+        border: 1.5px solid #d4d4d4; border-radius: 5px; overflow: hidden;
+    }
+    .qty-btn {
+        background: none; border: none; width: 30px; height: 30px;
+        font-size: 16px; cursor: pointer; transition: background .15s;
+    }
+    .qty-btn:hover { background: #f5f5f5; }
+    .qty-num { width: 30px; text-align: center; font-size: 13px; font-weight: 600; }
+    .item-subtotal { font-size: 13px; font-weight: 700; margin-top: 4px; }
+    .remove-form { margin-top: 6px; }
+    .remove-btn {
+        background: none; border: none; font-size: 12px; color: #888;
+        cursor: pointer; text-decoration: underline; font-family: 'DM Sans', sans-serif;
+    }
+
+    /* ── Delivery Notice ── */
+    .delivery-notice {
+        background: #f5f5f5; border-radius: 6px; padding: 10px 14px;
+        font-size: 12px; color: #3a3a3a; display: flex; align-items: center; gap: 8px;
+    }
+
+    /* ── Empty Cart ── */
+    .empty-cart {
+        text-align: center; padding: 80px 20px; color: #888;
+    }
+    .empty-cart h2 { font-size: 20px; margin-bottom: 12px; color: #0a0a0a; }
+
+    /* ── Order Summary ── */
+    .order-summary {
+        width: 280px; flex-shrink: 0;
+        border: 1px solid #e8e8e8; border-radius: 8px;
+        padding: 20px; height: fit-content;
+    }
+    .summary-title { font-weight: 700; font-size: 15px; margin-bottom: 16px; }
+    .summary-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; }
+    .summary-row.discount { color: #ef4444; }
+    .summary-divider { border: none; border-top: 1px solid #e8e8e8; margin: 12px 0; }
+    .summary-total { display: flex; justify-content: space-between; font-size: 16px; font-weight: 700; margin-bottom: 14px; }
+    .promo-row { display: flex; gap: 6px; margin-bottom: 14px; }
+    .promo-input {
+        flex: 1; border: 1.5px solid #d4d4d4; border-radius: 5px;
+        padding: 8px 10px; font-size: 12px; font-family: 'DM Sans', sans-serif; outline: none;
+    }
+    .promo-input:focus { border-color: #0a0a0a; }
+    .promo-apply-btn {
+        background: #0a0a0a; color: #fff; border: none; border-radius: 5px;
+        padding: 0 14px; font-size: 12px; font-weight: 600;
+        font-family: 'DM Sans', sans-serif; cursor: pointer;
+    }
+    .checkout-btn {
+        width: 100%; background: #0a0a0a; color: #fff;
+        border: none; padding: 13px; font-size: 14px; font-weight: 700;
+        border-radius: 6px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+        transition: background .2s; letter-spacing: .5px; text-align: center;
+        display: block; text-decoration: none;
+    }
+    .checkout-btn:hover { background: #333; }
+    .secure-note { text-align: center; font-size: 11px; color: #888; margin-top: 8px; }
+    .continue-link {
+        display: block; text-align: center; margin-top: 12px;
+        font-size: 12px; color: #3a3a3a; text-decoration: none;
+    }
+    .continue-link:hover { color: #0a0a0a; }
+</style>
+}
+
+<div class="cart-page">
+    <div class="page-title-big">Shopping Cart</div>
+
+    @if (!Model.Items.Any())
+    {
+        <!-- ── EMPTY STATE ── -->
+        <div class="empty-cart">
+            <div style="font-size: 48px; margin-bottom: 16px;">🛒</div>
+            <h2>Your cart is empty</h2>
+            <p style="margin-bottom:24px;">Add some products to get started.</p>
+            <a class="btn-black" asp-controller="Shop" asp-action="Index">Browse Products</a>
+        </div>
+    }
+    else
+    {
+        <div class="cart-layout">
+
+            <!-- ── CART ITEMS ── -->
+            <div class="cart-items">
+                @foreach (var item in Model.Items)
+                {
+                    <div class="cart-item">
+                        <img class="cart-item-img"
+                             src="@item.ImageUrl"
+                             alt="@item.ProductName"
+                             onerror="this.src='/images/placeholder.png'" />
+
+                        <div class="cart-item-details">
+                            <div class="cart-item-name">@item.ProductName</div>
+                            <div class="cart-item-meta">
+                                @if (!string.IsNullOrEmpty(item.Size)) { <span>Size: @item.Size</span> }
+                                @if (!string.IsNullOrEmpty(item.Color)) { <span> | Color: @item.Color</span> }
+                            </div>
+                            <span class="@(item.IsInStock ? "in-stock-badge" : "out-stock-badge")">
+                                @(item.IsInStock ? "In Stock" : "Out of Stock")
+                            </span>
+
+                            @* Remove Item *@
+                            <div class="remove-form">
+                                <form method="post" asp-controller="Shop" asp-action="RemoveFromCart"
+                                      style="display:inline;">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="cartItemId" value="@item.CartItemId" />
+                                    <button type="submit" class="remove-btn">Remove</button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="cart-item-price-col">
+                            <div class="cart-item-price">₱@item.UnitPrice.ToString("N0")</div>
+                            <div>
+                                @* Update Quantity *@
+                                <form method="post" asp-controller="Shop" asp-action="UpdateCartQty">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="cartItemId" value="@item.CartItemId" />
+                                    <div class="qty-control">
+                                        <button type="submit" name="action" value="decrease" class="qty-btn">−</button>
+                                        <div class="qty-num">@item.Quantity</div>
+                                        <button type="submit" name="action" value="increase" class="qty-btn">+</button>
+                                    </div>
+                                </form>
+                                <div class="item-subtotal" style="text-align:right;">
+                                    ₱@((item.UnitPrice * item.Quantity).ToString("N0"))
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <div class="delivery-notice">
+                    📦 &nbsp; Estimated delivery: 3-5 business days
+                    @if (Model.EstimatedDeliveryDate.HasValue)
+                    {
+                        <span>(@Model.EstimatedDeliveryDate.Value.ToString("MMM d") – @Model.EstimatedDeliveryDate.Value.AddDays(2).ToString("MMM d"))</span>
+                    }
+                </div>
+            </div>
+
+            <!-- ── ORDER SUMMARY ── -->
+            <div class="order-summary">
+                <div class="summary-title">Order Summary</div>
+
+                <div class="summary-row">
+                    <span>Subtotal (@Model.Items.Sum(i => i.Quantity) items)</span>
+                    <span>₱@Model.Subtotal.ToString("N0")</span>
+                </div>
+                <div class="summary-row">
+                    <span>Shipping</span>
+                    <span>₱@Model.ShippingFee.ToString("N0")</span>
+                </div>
+                @if (Model.Discount > 0)
+                {
+                    <div class="summary-row discount">
+                        <span>Discount</span>
+                        <span>-₱@Model.Discount.ToString("N0")</span>
+                    </div>
+                }
+
+                <hr class="summary-divider" />
+                <div class="summary-total">
+                    <span>Total</span>
+                    <span>₱@Model.Total.ToString("N0")</span>
+                </div>
+
+                @* Promo Code *@
+                <form method="post" asp-controller="Shop" asp-action="ApplyPromo">
+                    @Html.AntiForgeryToken()
+                    <div class="promo-row">
+                        <input class="promo-input" type="text" name="promoCode"
+                               placeholder="Enter promo code"
+                               value="@Model.AppliedPromoCode" />
+                        <button type="submit" class="promo-apply-btn">Apply</button>
+                    </div>
+                </form>
+
+                <a class="checkout-btn" asp-controller="Shop" asp-action="Checkout">
+                    Proceed to Checkout
+                </a>
+                <div class="secure-note">🔒 Secure checkout • SSL encrypted</div>
+                <a class="continue-link" asp-controller="Shop" asp-action="Index">
+                    ← Continue Shopping
+                </a>
+            </div>
+
+        </div>
+    }
+</div>

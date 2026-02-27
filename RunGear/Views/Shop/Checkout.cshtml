@@ -1,0 +1,333 @@
+@* ============================================================
+   MODULE 7 - ORDER FORM / CHECKOUT
+   Controller : ShopController.cs  →  Action: Checkout (GET)
+   Post To    : ShopController.cs  →  Action: PlaceOrder  (POST)
+   Model      : CheckoutViewModel
+   ============================================================ *@
+
+@model RunGear.Models.CheckoutViewModel
+
+@{
+    ViewBag.Title      = "Checkout";
+    ViewBag.ActivePage = "Checkout";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+<style>
+    .checkout-page { max-width: 860px; margin: 0 auto; padding: 40px 24px; }
+    .checkout-title {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 30px; letter-spacing: 2px;
+        text-align: center; margin-bottom: 6px;
+    }
+
+    /* ── Breadcrumb Steps ── */
+    .steps {
+        display: flex; align-items: center; justify-content: center;
+        margin-bottom: 36px;
+    }
+    .step { font-size: 12px; color: #888; font-weight: 500; }
+    .step.done   { color: #0a0a0a; font-weight: 600; }
+    .step.active { color: #0a0a0a; font-weight: 700; }
+    .step-sep { width: 50px; height: 1px; background: #d4d4d4; margin: 0 10px; }
+    .step-sep.done { background: #0a0a0a; }
+
+    /* ── Layout ── */
+    .checkout-layout { display: flex; gap: 28px; }
+    .checkout-form-col { flex: 1; }
+
+    /* ── Form Sections ── */
+    .form-section { margin-bottom: 24px; }
+    .form-section-title { font-size: 14px; font-weight: 700; margin-bottom: 14px; letter-spacing: .3px; }
+    .form-row { display: flex; gap: 12px; margin-bottom: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; flex: 1; }
+    .form-label {
+        font-size: 11px; font-weight: 600; color: #3a3a3a;
+        letter-spacing: .5px; text-transform: uppercase;
+    }
+    .form-input {
+        border: 1.5px solid #d4d4d4; border-radius: 5px;
+        padding: 10px 12px; font-size: 13px;
+        font-family: 'DM Sans', sans-serif; outline: none;
+        transition: border-color .15s;
+    }
+    .form-input:focus   { border-color: #0a0a0a; }
+    .form-input.is-invalid { border-color: #ef4444; }
+    .field-error { font-size: 11px; color: #ef4444; margin-top: 2px; }
+
+    /* ── Delivery Options ── */
+    .delivery-options { display: flex; gap: 12px; }
+    .delivery-option {
+        flex: 1; border: 1.5px solid #d4d4d4; border-radius: 6px;
+        padding: 14px; cursor: pointer; display: flex;
+        align-items: flex-start; gap: 10px; transition: border-color .15s;
+    }
+    .delivery-option:has(input:checked) { border-color: #0a0a0a; background: #fafafa; }
+    .delivery-option input[type="radio"] { margin-top: 2px; accent-color: #0a0a0a; }
+    .delivery-name  { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+    .delivery-days  { font-size: 11px; color: #888; margin-bottom: 4px; }
+    .delivery-price { font-size: 13px; font-weight: 700; }
+
+    /* ── Payment ── */
+    .payment-option {
+        border: 1.5px solid #d4d4d4; border-radius: 6px;
+        padding: 14px; margin-bottom: 10px; cursor: pointer;
+        transition: border-color .15s;
+    }
+    .payment-option:has(input:checked) { border-color: #0a0a0a; }
+    .payment-option-header { display: flex; align-items: center; gap: 10px; }
+    .payment-option-header input[type="radio"] { accent-color: #0a0a0a; }
+    .payment-option-label { font-size: 13px; font-weight: 600; }
+    .card-icons { margin-left: auto; display: flex; gap: 6px; }
+    .card-icon {
+        width: 34px; height: 22px; background: #d4d4d4;
+        border-radius: 3px; display: flex; align-items: center; justify-content: center;
+        font-size: 8px; font-weight: 700; color: #3a3a3a;
+    }
+    .card-fields { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+    .card-row { display: flex; gap: 10px; }
+
+    /* ── Checkout Summary Sidebar ── */
+    .checkout-summary {
+        width: 260px; flex-shrink: 0;
+        border: 1px solid #e8e8e8; border-radius: 8px;
+        padding: 20px; height: fit-content;
+    }
+    .checkout-summary-item { display: flex; gap: 10px; margin-bottom: 14px; align-items: flex-start; }
+    .checkout-summary-img {
+        width: 46px; height: 46px; border-radius: 5px;
+        object-fit: cover; background: #f5f5f5; flex-shrink: 0;
+    }
+    .checkout-summary-name { font-size: 13px; font-weight: 600; }
+    .checkout-summary-sub  { font-size: 11px; color: #888; }
+    .checkout-summary-price { margin-left: auto; font-size: 13px; font-weight: 700; }
+    .summary-title   { font-weight: 700; font-size: 15px; margin-bottom: 16px; }
+    .summary-row     { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; }
+    .summary-row.discount { color: #ef4444; }
+    .summary-divider { border: none; border-top: 1px solid #e8e8e8; margin: 12px 0; }
+    .summary-total   { display: flex; justify-content: space-between; font-size: 16px; font-weight: 700; margin-bottom: 14px; }
+
+    .place-order-btn {
+        width: 100%; background: #0a0a0a; color: #fff;
+        border: none; padding: 13px; font-size: 14px; font-weight: 700;
+        border-radius: 6px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+        transition: background .2s; letter-spacing: .5px; margin-top: 4px;
+    }
+    .place-order-btn:hover { background: #333; }
+    .secure-payment { text-align: center; font-size: 11px; color: #888; margin-top: 8px; }
+</style>
+}
+
+<div class="checkout-page">
+    @if (TempData["DebugErrors"] != null)
+            {
+                <div style="background:red;color:white;padding:12px;margin-bottom:16px;border-radius:6px;font-size:13px;">
+                    ⚠️ VALIDATION ERRORS: @TempData["DebugErrors"]
+                </div>
+            }
+
+    <div class="checkout-title">Checkout</div>
+
+    <!-- Breadcrumb -->
+    <div class="steps">
+        <span class="step done">Cart</span>
+        <div class="step-sep done"></div>
+        <span class="step active">Checkout</span>
+        <div class="step-sep"></div>
+        <span class="step">Confirmation</span>
+    </div>
+
+    <form method="post" asp-controller="Shop" asp-action="PlaceOrder">
+        @Html.AntiForgeryToken()
+
+        <div class="checkout-layout">
+
+            <!-- ── FORM COLUMN ── -->
+            <div class="checkout-form-col">
+
+                <!-- Shipping Info -->
+                <div class="form-section">
+                    <div class="form-section-title">Shipping Information</div>
+
+                    <div class="form-row">
+                        <div class="form-group" style="flex:1 1 100%;">
+                            <label class="form-label" asp-for="FullName">Full Name</label>
+                            <input class="form-input @(ViewData.ModelState["FullName"]?.Errors.Any() == true ? "is-invalid" : "")"
+                                   asp-for="FullName" placeholder="Juan dela Cruz" />
+                            <span class="field-error">@Html.ValidationMessageFor(m => m.FullName)</span>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" asp-for="Email">Email Address</label>
+                            <input class="form-input" asp-for="Email" placeholder="juan@example.com" />
+                            <span class="field-error">@Html.ValidationMessageFor(m => m.Email)</span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" asp-for="Phone">Phone Number</label>
+                            <input class="form-input" asp-for="Phone" placeholder="+63 900 000 0000" />
+                            <span class="field-error">@Html.ValidationMessageFor(m => m.Phone)</span>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group" style="flex:1 1 100%;">
+                            <label class="form-label" asp-for="Address">Address</label>
+                            <input class="form-input" asp-for="Address" placeholder="123 Rizal St, Apt 4B" />
+                            <span class="field-error">@Html.ValidationMessageFor(m => m.Address)</span>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" asp-for="City">City</label>
+                            <input class="form-input" asp-for="City" placeholder="Manila" />
+                            <span class="field-error">@Html.ValidationMessageFor(m => m.City)</span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" asp-for="PostalCode">Postal Code</label>
+                            <input class="form-input" asp-for="PostalCode" placeholder="1000" />
+                            <span class="field-error">@Html.ValidationMessageFor(m => m.PostalCode)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Delivery Options -->
+                <div class="form-section">
+                    <div class="form-section-title">Delivery Options</div>
+                    <div class="delivery-options">
+                        <label class="delivery-option">
+                            <input type="radio" name="DeliveryOption" value="Standard"
+                                   @(Model.DeliveryOption == "Standard" || string.IsNullOrEmpty(Model.DeliveryOption) ? "checked" : "") />
+                            <div>
+                                <div class="delivery-name">Standard Delivery</div>
+                                <div class="delivery-days">3-5 business days</div>
+                                <div class="delivery-price">₱150.00</div>
+                            </div>
+                        </label>
+                        <label class="delivery-option">
+                            <input type="radio" name="DeliveryOption" value="Express"
+                                   @(Model.DeliveryOption == "Express" ? "checked" : "") />
+                            <div>
+                                <div class="delivery-name">Express Delivery</div>
+                                <div class="delivery-days">1-2 business days</div>
+                                <div class="delivery-price">₱300.00</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Payment Method -->
+                <div class="form-section">
+                    <div class="form-section-title">Payment Method</div>
+
+                    <div class="payment-option">
+                        <div class="payment-option-header">
+                            <input type="radio" name="PaymentMethod" value="Card"
+                                   id="pay-card"
+                                   @(Model.PaymentMethod == "Card" || string.IsNullOrEmpty(Model.PaymentMethod) ? "checked" : "")
+                                   onchange="toggleCardFields()" />
+                            <label class="payment-option-label" for="pay-card">Credit / Debit Card</label>
+                            <div class="card-icons">
+                                <div class="card-icon">VISA</div>
+                                <div class="card-icon">MC</div>
+                            </div>
+                        </div>
+                        <div class="card-fields" id="card-fields">
+                            <input class="form-input" type="text" name="CardNumber"
+                                   placeholder="Card Number" maxlength="19" />
+                            <div class="card-row">
+                                <input class="form-input" style="flex:1" type="text"
+                                       name="CardExpiry" placeholder="MM / YY" maxlength="5" />
+                                <input class="form-input" style="flex:1" type="text"
+                                       name="CardCvv" placeholder="CVV" maxlength="4" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="payment-option">
+                        <div class="payment-option-header">
+                            <input type="radio" name="PaymentMethod" value="PayPal"
+                                   id="pay-paypal"
+                                   @(Model.PaymentMethod == "PayPal" ? "checked" : "")
+                                   onchange="toggleCardFields()" />
+                            <label class="payment-option-label" for="pay-paypal">PayPal</label>
+                        </div>
+                    </div>
+
+                    <div class="payment-option">
+                        <div class="payment-option-header">
+                            <input type="radio" name="PaymentMethod" value="COD"
+                                   id="pay-cod"
+                                   @(Model.PaymentMethod == "COD" ? "checked" : "")
+                                   onchange="toggleCardFields()" />
+                            <label class="payment-option-label" for="pay-cod">Cash on Delivery (COD)</label>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ── ORDER SUMMARY SIDEBAR ── -->
+            <div class="checkout-summary">
+                <div class="summary-title">Order Summary</div>
+
+                @foreach (var item in Model.CartItems)
+                {
+                    <div class="checkout-summary-item">
+                        <img class="checkout-summary-img"
+                             src="@item.ImageUrl" alt="@item.ProductName"
+                             onerror="this.src='/images/placeholder.png'" />
+                        <div>
+                            <div class="checkout-summary-name">@item.ProductName</div>
+                            <div class="checkout-summary-sub">
+                                @item.Size @(!string.IsNullOrEmpty(item.Color) ? "| " + item.Color : "")
+                                × @item.Quantity
+                            </div>
+                        </div>
+                        <div class="checkout-summary-price">₱@((item.UnitPrice * item.Quantity).ToString("N0"))</div>
+                    </div>
+                }
+
+                <hr class="summary-divider" />
+                <div class="summary-row"><span>Subtotal</span><span>₱@Model.Subtotal.ToString("N0")</span></div>
+                <div class="summary-row"><span>Shipping</span><span>₱@Model.ShippingFee.ToString("N0")</span></div>
+                @if (Model.Discount > 0)
+                {
+                    <div class="summary-row discount"><span>Discount</span><span>-₱@Model.Discount.ToString("N0")</span></div>
+                }
+                <hr class="summary-divider" />
+                <div class="summary-total"><span>Total</span><span>₱@Model.Total.ToString("N0")</span></div>
+
+                <button type="submit" class="place-order-btn">Place Order</button>
+                <div class="secure-payment">🔒 Secure payment • Your data is protected</div>
+            </div>
+
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+<script>
+    function toggleCardFields() {
+        const isCard = document.getElementById('pay-card').checked;
+        document.getElementById('card-fields').style.display = isCard ? 'flex' : 'none';
+    }
+    // Init on load
+    toggleCardFields();
+
+    // Card number formatter
+    document.querySelector('input[name="CardNumber"]')?.addEventListener('input', function () {
+        this.value = this.value.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim().slice(0, 19);
+    });
+
+    // Expiry formatter
+    document.querySelector('input[name="CardExpiry"]')?.addEventListener('input', function () {
+        let v = this.value.replace(/\D/g, '');
+        if (v.length >= 2) v = v.slice(0, 2) + ' / ' + v.slice(2);
+        this.value = v.slice(0, 7);
+    });
+</script>
+}

@@ -1,0 +1,320 @@
+@* ============================================================
+   MODULE 5 - PRODUCTS & SERVICES
+   Controller : ShopController.cs  →  Action: Index
+   Model      : IEnumerable<ProductViewModel>
+   ============================================================ *@
+
+@model IEnumerable<RunGear.Models.ProductViewModel>
+
+@{
+    ViewBag.Title      = "Products & Services";
+    ViewBag.ActivePage = "Products";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+<style>
+    .products-layout {
+        display: flex; min-height: calc(100vh - 60px);
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+        width: 220px; min-width: 220px;
+        padding: 28px 24px;
+        border-right: 1px solid #e8e8e8;
+    }
+    .sidebar-header {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 28px;
+    }
+    .sidebar-title { font-size: 15px; font-weight: 700; }
+    .clear-all-link {
+        font-size: 12px; color: #888; text-decoration: underline;
+    }
+    .filter-section { margin-bottom: 28px; }
+    .filter-label {
+        font-size: 12px; font-weight: 700; letter-spacing: 1px;
+        text-transform: uppercase; margin-bottom: 12px;
+    }
+    .filter-option { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .filter-option input[type="checkbox"] { width: 15px; height: 15px; accent-color: #0a0a0a; }
+    .filter-option span { font-size: 13px; }
+    .filter-option .count { margin-left: auto; font-size: 11px; color: #888; }
+    .price-slider {
+        -webkit-appearance: none; width: 100%; height: 3px;
+        background: linear-gradient(to right, #0a0a0a 60%, #d4d4d4 60%);
+        border-radius: 2px; outline: none;
+    }
+    .price-slider::-webkit-slider-thumb {
+        -webkit-appearance: none; width: 16px; height: 16px;
+        background: #0a0a0a; border-radius: 50%; cursor: pointer;
+    }
+    .price-labels { display: flex; justify-content: space-between; font-size: 11px; color: #888; margin-top: 6px; }
+    .size-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+    .size-btn {
+        width: 38px; height: 34px; border: 1.5px solid #d4d4d4;
+        background: none; font-size: 12px; font-weight: 500; cursor: pointer;
+        border-radius: 4px; font-family: 'DM Sans', sans-serif; transition: all .15s;
+    }
+    .size-btn:hover { border-color: #0a0a0a; }
+    .size-btn.selected { background: #0a0a0a; color: #fff; border-color: #0a0a0a; }
+
+    /* ── Main Area ── */
+    .products-main { flex: 1; padding: 28px 32px; }
+    .products-header {
+        display: flex; align-items: baseline; justify-content: space-between;
+        margin-bottom: 16px;
+    }
+    .products-heading {
+        font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 2px;
+    }
+    .products-count { font-size: 13px; color: #888; margin-left: 10px; }
+    .sort-select {
+        border: 1px solid #d4d4d4; background: #fff;
+        font-size: 13px; padding: 5px 10px; border-radius: 4px;
+        font-family: 'DM Sans', sans-serif;
+    }
+    .view-toggle { display: flex; gap: 4px; margin-bottom: 20px; }
+    .view-btn {
+        background: none; border: 1.5px solid #d4d4d4;
+        width: 34px; height: 32px; border-radius: 4px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; transition: all .15s;
+    }
+    .view-btn.active { background: #0a0a0a; border-color: #0a0a0a; }
+    .view-btn.active svg { stroke: #fff; }
+    .view-btn svg { width: 16px; height: 16px; stroke: #888; fill: none; }
+
+    /* ── Product Grid ── */
+    .products-grid {
+        display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;
+    }
+    .products-grid.list-view { grid-template-columns: 1fr; }
+
+    .product-card {
+        border: 1px solid #ebebeb; border-radius: 8px; overflow: hidden;
+        transition: box-shadow .2s, transform .2s;
+    }
+    .product-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,.1); transform: translateY(-2px); }
+    .product-img-wrap {
+        position: relative; aspect-ratio: 1; overflow: hidden; background: #f5f5f5;
+    }
+    .product-img-wrap img {
+        width: 100%; height: 100%; object-fit: cover; transition: transform .3s;
+    }
+    .product-card:hover .product-img-wrap img { transform: scale(1.04); }
+    .product-badge {
+        position: absolute; top: 10px; left: 10px;
+        background: #ef4444; color: #fff;
+        font-size: 10px; font-weight: 700; padding: 3px 7px; border-radius: 3px;
+    }
+    .product-info { padding: 12px 14px 14px; }
+    .product-name { font-size: 13px; font-weight: 600; margin-bottom: 4px; line-height: 1.3; }
+    .stars { display: flex; align-items: center; gap: 3px; margin-bottom: 6px; }
+    .star-filled { color: #f59e0b; font-size: 12px; }
+    .star-empty  { color: #d4d4d4; font-size: 12px; }
+    .review-count { font-size: 11px; color: #888; }
+    .product-price { font-size: 16px; font-weight: 700; margin-bottom: 10px; }
+    .add-cart-btn {
+        width: 100%; background: #0a0a0a; color: #fff;
+        border: none; padding: 9px; font-size: 12px; font-weight: 600;
+        border-radius: 5px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+        letter-spacing: .5px; transition: background .2s;
+    }
+    .add-cart-btn:hover { background: #333; }
+
+    /* List view */
+    .products-grid.list-view .product-card {
+        display: flex; align-items: center; gap: 20px; padding: 16px;
+    }
+    .products-grid.list-view .product-img-wrap {
+        width: 100px; height: 100px; flex-shrink: 0;
+        border-radius: 6px; aspect-ratio: unset;
+    }
+    .products-grid.list-view .product-info { flex: 1; padding: 0; }
+    .products-grid.list-view .add-cart-btn { width: auto; padding: 9px 20px; }
+</style>
+}
+
+<div class="products-layout">
+
+    <!-- ── SIDEBAR FILTERS ── -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <span class="sidebar-title">Filters</span>
+            <a class="clear-all-link" asp-controller="Shop" asp-action="Index">Clear All</a>
+        </div>
+
+        @* Filter form submits GET to keep URL shareable *@
+        <form method="get" asp-controller="Shop" asp-action="Index" id="filter-form">
+
+            @* Category *@
+            <div class="filter-section">
+                <div class="filter-label">Category</div>
+                @foreach (var cat in ViewBag.Categories as List<string> ?? new List<string> { "Running Shoes", "Apparel", "Accessories" })
+                {
+                    <label class="filter-option">
+                        <input type="checkbox" name="categories" value="@cat"
+                               @(((List<string>)(ViewBag.SelectedCategories ?? new List<string>())).Contains(cat) ? "checked" : "")
+                               onchange="document.getElementById('filter-form').submit()">
+                        <span>@cat</span>
+                    </label>
+                }
+            </div>
+
+            @* Price Range *@
+            <div class="filter-section">
+                <div class="filter-label">Price Range</div>
+                <input type="range" class="price-slider" name="maxPrice"
+                       min="0" max="10000" value="@(ViewBag.MaxPrice ?? 10000)"
+                       onchange="document.getElementById('price-label').textContent='₱'+this.value; document.getElementById('filter-form').submit()">
+                <div class="price-labels">
+                    <span>₱0</span>
+                    <span id="price-label">₱@(ViewBag.MaxPrice ?? 10000)</span>
+                </div>
+            </div>
+
+            @* Brand *@
+            <div class="filter-section">
+                <div class="filter-label">Brand</div>
+                @foreach (var brand in ViewBag.BrandCounts as Dictionary<string, int> ?? new Dictionary<string, int> { { "Nike", 24 }, { "Adidas", 18 }, { "On Running", 9 } })
+                {
+                    <label class="filter-option">
+                        <input type="checkbox" name="brands" value="@brand.Key"
+                               @(((List<string>)(ViewBag.SelectedBrands ?? new List<string>())).Contains(brand.Key) ? "checked" : "")
+                               onchange="document.getElementById('filter-form').submit()">
+                        <span>@brand.Key</span>
+                        <span class="count">@brand.Value</span>
+                    </label>
+                }
+            </div>
+
+            @* Size *@
+            <div class="filter-section">
+                <div class="filter-label">Size</div>
+                <div class="size-grid">
+                    @foreach (var sz in new[] { "XS", "S", "M", "L", "XL" })
+                    {
+                        var isSelected = ((List<string>)(ViewBag.SelectedSizes ?? new List<string>())).Contains(sz);
+                        <button type="submit" name="sizes" value="@sz"
+                                class="size-btn @(isSelected ? "selected" : "")">@sz</button>
+                    }
+                </div>
+            </div>
+
+        </form>
+    </aside>
+
+    <!-- ── PRODUCTS MAIN ── -->
+    <main class="products-main">
+        <div class="products-header">
+            <div>
+                <span class="products-heading">@(ViewBag.CategoryTitle ?? "Running Gear")</span>
+                <span class="products-count">(@Model.Count() products)</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:13px;color:#888;">Sort by:</span>
+                <form method="get" asp-controller="Shop" asp-action="Index">
+                    <select class="sort-select" name="sortBy"
+                            onchange="this.form.submit()">
+                        <option value="relevance" selected="@(ViewBag.SortBy == "relevance")">Relevance</option>
+                        <option value="price_asc"  selected="@(ViewBag.SortBy == "price_asc")">Price: Low to High</option>
+                        <option value="price_desc" selected="@(ViewBag.SortBy == "price_desc")">Price: High to Low</option>
+                        <option value="newest"     selected="@(ViewBag.SortBy == "newest")">Newest</option>
+                        <option value="rating"     selected="@(ViewBag.SortBy == "rating")">Top Rated</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+
+        @* View Toggle *@
+        <div class="view-toggle">
+            <button class="view-btn active" id="grid-btn" onclick="setView('grid')" type="button">
+                <svg viewBox="0 0 24 24">
+                    <rect x="3" y="3" width="8" height="8" rx="1"/>
+                    <rect x="13" y="3" width="8" height="8" rx="1"/>
+                    <rect x="3" y="13" width="8" height="8" rx="1"/>
+                    <rect x="13" y="13" width="8" height="8" rx="1"/>
+                </svg>
+            </button>
+            <button class="view-btn" id="list-btn" onclick="setView('list')" type="button">
+                <svg viewBox="0 0 24 24">
+                    <line x1="3" y1="6" x2="21" y2="6"/>
+                    <line x1="3" y1="12" x2="21" y2="12"/>
+                    <line x1="3" y1="18" x2="21" y2="18"/>
+                </svg>
+            </button>
+        </div>
+
+        @* Products Grid *@
+        <div class="products-grid" id="products-grid">
+
+            @if (!Model.Any())
+            {
+                <div style="grid-column:1/-1; text-align:center; padding:60px; color:#888;">
+                    No products found matching your filters.
+                </div>
+            }
+
+            @foreach (var product in Model)
+            {
+                <div class="product-card">
+                    <div class="product-img-wrap">
+                        <img src="@product.ImageUrl" alt="@product.Name"
+                             onerror="this.src='/images/placeholder.png'" />
+                        @if (product.DiscountPercent > 0)
+                        {
+                            <span class="product-badge">@product.DiscountPercent% OFF</span>
+                        }
+                        else if (product.IsNew)
+                        {
+                            <span class="product-badge" style="background:#0a0a0a;">NEW</span>
+                        }
+                    </div>
+                    <div class="product-info">
+                        <div class="product-name">@product.Name</div>
+                        <div class="stars">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                <span class="@(i <= (int)product.Rating ? "star-filled" : "star-empty")">★</span>
+                            }
+                            <span class="review-count">(@product.ReviewCount)</span>
+                        </div>
+                        <div class="product-price">₱@product.Price.ToString("N0")</div>
+
+                        @* POST to AddToCart, then redirect back *@
+                        <form method="post" asp-controller="Shop" asp-action="AddToCart">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="productId" value="@product.ProductId" />
+                            <input type="hidden" name="quantity"  value="1" />
+                            <button type="submit" class="add-cart-btn">Add to Cart</button>
+                        </form>
+                    </div>
+                </div>
+            }
+        </div>
+    </main>
+</div>
+
+@section Scripts {
+<script>
+    function setView(mode) {
+        const grid    = document.getElementById('products-grid');
+        const gridBtn = document.getElementById('grid-btn');
+        const listBtn = document.getElementById('list-btn');
+        if (mode === 'list') {
+            grid.classList.add('list-view');
+            gridBtn.classList.remove('active');
+            listBtn.classList.add('active');
+        } else {
+            grid.classList.remove('list-view');
+            gridBtn.classList.add('active');
+            listBtn.classList.remove('active');
+        }
+        localStorage.setItem('productView', mode);
+    }
+    // Restore saved view preference
+    const savedView = localStorage.getItem('productView');
+    if (savedView === 'list') setView('list');
+</script>
+}

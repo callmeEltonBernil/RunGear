@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewBag.Title - RunGear</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    @RenderSection("Styles", required: false)
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --black: #0a0a0a;
+            --dark: #1a1a1a;
+            --mid: #3a3a3a;
+            --gray: #888;
+            --light-gray: #d4d4d4;
+            --off-white: #f5f5f5;
+            --white: #ffffff;
+            --green: #22c55e;
+            --red: #ef4444;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--white);
+            color: var(--black);
+            min-height: 100vh;
+        }
+
+        /* NAV */
+        nav.main-nav {
+            position: sticky; top: 0; z-index: 100;
+            background: var(--black);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 40px; height: 60px;
+            border-bottom: 1px solid #222;
+        }
+        .nav-logo {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 26px; letter-spacing: 3px;
+            color: var(--white); text-decoration: none;
+        }
+        .nav-links { display: flex; gap: 6px; }
+        .nav-link {
+            background: none; border: none; color: var(--light-gray);
+            font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+            padding: 6px 14px; border-radius: 4px; cursor: pointer;
+            text-decoration: none; display: inline-block;
+            transition: all .2s; letter-spacing: .5px;
+        }
+        .nav-link:hover, .nav-link.active {
+            background: #2a2a2a; color: var(--white);
+        }
+        .nav-cart-btn {
+            background: var(--white); color: var(--black);
+            border: none; border-radius: 4px; padding: 6px 16px;
+            font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+            text-decoration: none; transition: background .2s;
+        }
+        .nav-cart-btn:hover { background: var(--off-white); }
+        .cart-badge {
+            background: var(--red); color: white; font-size: 10px; font-weight: 700;
+            width: 18px; height: 18px; border-radius: 50%;
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+
+        /* Shared Buttons */
+        .btn-black {
+            background: var(--black); color: var(--white);
+            border: none; padding: 12px 20px; font-size: 13px; font-weight: 700;
+            border-radius: 6px; cursor: pointer; letter-spacing: .5px;
+            font-family: 'DM Sans', sans-serif; transition: background .2s;
+            text-decoration: none; display: inline-block;
+        }
+        .btn-black:hover { background: #333; }
+        .btn-outline {
+            background: none; color: var(--black);
+            border: 1.5px solid var(--black); padding: 12px 20px;
+            font-size: 13px; font-weight: 700; border-radius: 6px;
+            cursor: pointer; font-family: 'DM Sans', sans-serif;
+            text-decoration: none; display: inline-block; transition: all .15s;
+        }
+        .btn-outline:hover { background: var(--black); color: var(--white); }
+
+        /* Alert messages (TempData) */
+        .alert {
+            padding: 12px 20px; border-radius: 6px; margin: 16px 40px;
+            font-size: 13px; font-weight: 500;
+        }
+        .alert-success { background: #dcfce7; color: #16a34a; border: 1px solid #bbf7d0; }
+        .alert-danger  { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
+
+        footer {
+            background: var(--black); color: var(--gray);
+            text-align: center; padding: 20px; font-size: 12px; margin-top: 60px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="main-nav">
+        <a class="nav-logo" asp-controller="Shop" asp-action="Index">RUNGEAR</a>
+
+        <div class="nav-links">
+            <a class="nav-link @(ViewBag.ActivePage == "Products" ? "active" : "")"
+               asp-controller="Shop" asp-action="Index">
+                Products &amp; Services
+            </a>
+            <a class="nav-link @(ViewBag.ActivePage == "Cart" ? "active" : "")"
+               asp-controller="Shop" asp-action="Cart">
+                Preview Basket
+            </a>
+            <a class="nav-link @(ViewBag.ActivePage == "Checkout" ? "active" : "")"
+               asp-controller="Shop" asp-action="Checkout">
+                Checkout
+            </a>
+        </div>
+
+        <a class="nav-cart-btn" asp-controller="Shop" asp-action="Cart">
+            🛒 Cart
+            <span class="cart-badge">@(ViewBag.CartCount ?? 0)</span>
+        </a>
+    </nav>
+
+    <!-- FLASH MESSAGES (TempData) -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    }
+
+    <!-- PAGE CONTENT -->
+    @RenderBody()
+
+    <footer>
+        &copy; @DateTime.Now.Year RunGear. All rights reserved.
+    </footer>
+
+    @RenderSection("Scripts", required: false)
+</body>
+</html>
